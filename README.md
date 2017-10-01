@@ -1,0 +1,1 @@
+ManateeCoin is a next-generation cryptocurrency backed by manatees
