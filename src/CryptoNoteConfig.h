@@ -21,7 +21,7 @@ const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
 
 const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW             = 60;
 
-const uint64_t MONEY_SUPPLY                                  = UINT64_C(10000000000000000);
+const uint64_t MONEY_SUPPLY                                  = UINT64_C(100000000);
 const unsigned EMISSION_SPEED_FACTOR                         = 22;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
 
@@ -118,7 +118,7 @@ __attribute__((unused))
 
 // {<block height>, "<block hash>"}
 const std::initializer_list<CheckpointData> CHECKPOINTS = {
-  //{ 10000, "84b6345731e2702cdaadc6ce5e5238c4ca5ecf48e3447136b2ed829b8a95f3ad" },
+  { 24552, "a5fced9c59f3f3192fc5460845aa5ef89de9e9704a98fb5c692e23e9315d5048" }
 };
 }
 
