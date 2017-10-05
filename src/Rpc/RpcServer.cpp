@@ -110,6 +110,10 @@ void RpcServer::processRequest(const HttpRequest& request, HttpResponse& respons
     response.setBody("Core is busy");
     return;
   }
+  
+  for (const auto& cors_domain: m_cors_domains) {
+    response.addHeader("Access-Control-Allow-Origin", cors_domain);
+  }
 
   it->second.handler(this, request, response);
 }
@@ -644,5 +648,9 @@ bool RpcServer::on_get_block_header_by_height(const COMMAND_RPC_GET_BLOCK_HEADER
   return true;
 }
 
+bool RpcServer::enableCors(const std::vector<std::string> domains) {
+	m_cors_domains = domains;
+	return true;
+}
 
 }
