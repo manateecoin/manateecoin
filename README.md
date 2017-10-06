@@ -21,7 +21,7 @@ cmake ..
 make
 ```
 
-###On Ubuntru 16.04 LTS
+### On Ubuntu 16.04 LTS
 
 
 1. Install dependencies
