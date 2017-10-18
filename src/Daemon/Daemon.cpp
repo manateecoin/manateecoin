@@ -48,6 +48,7 @@ namespace
     "network id is changed. Use it with --data-dir flag. The wallet must be launched with --testnet flag.", false};
   const command_line::arg_descriptor<bool>        arg_print_genesis_tx = { "print-genesis-tx", "Prints genesis' block tx hex to insert it to config and exits" };
   const command_line::arg_descriptor<std::vector<std::string>>        arg_enable_cors = { "enable-cors", "Adds header 'Access-Control-Allow-Origin' to the daemon's RPC responses. Uses the value as domain. Use * for all" };
+  const command_line::arg_descriptor<bool>        arg_api_xmr = { "api-xmr", "Enable Monero-compatible RPC API" };
 }
 
 bool command_line_preprocessor(const boost::program_options::variables_map& vm, LoggerRef& logger);
@@ -112,6 +113,7 @@ int main(int argc, char* argv[])
     command_line::add_arg(desc_cmd_sett, arg_testnet_on);
     command_line::add_arg(desc_cmd_sett, arg_print_genesis_tx);
 	command_line::add_arg(desc_cmd_sett, arg_enable_cors);
+	command_line::add_arg(desc_cmd_sett, arg_api_xmr);
 
     RpcServerConfig::initOptions(desc_cmd_sett);
     CoreConfig::initOptions(desc_cmd_sett);
