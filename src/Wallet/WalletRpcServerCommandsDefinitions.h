@@ -19,6 +19,20 @@ using CryptoNote::ISerializer;
 #define WALLET_RPC_STATUS_OK      "OK"
 #define WALLET_RPC_STATUS_BUSY    "BUSY"
 
+struct COMMAND_RPC_GET_ADDRESS
+{
+	typedef CryptoNote::EMPTY_STRUCT request;
+
+	struct response
+	{
+		std::string address;
+
+		void serialize(ISerializer& s) {
+			KV_MEMBER(address)
+		}
+	};
+};
+
   struct COMMAND_RPC_GET_BALANCE
   {
     typedef CryptoNote::EMPTY_STRUCT request;

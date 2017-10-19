@@ -88,7 +88,11 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
     jsonRequest.parseRequest(request.getBody());
     jsonResponse.setId(jsonRequest.getId());
 
+
+	//Simplewallet API calls list
+
     static std::unordered_map<std::string, JsonMemberMethod> s_methods = {
+      { "getaddress", makeMemberMethod(&wallet_rpc_server::on_getaddress) },
       { "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance) },
       { "transfer", makeMemberMethod(&wallet_rpc_server::on_transfer) },
       { "store", makeMemberMethod(&wallet_rpc_server::on_store) },
@@ -114,6 +118,11 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
   response.setBody(jsonResponse.getBody());
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+bool wallet_rpc_server::on_getaddress(const wallet_rpc::COMMAND_RPC_GET_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_GET_ADDRESS::response& res) {
+	res.address = m_wallet.getAddress();
+	return true;
+}
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response& res) {
   res.locked_amount = m_wallet.pendingBalance();
