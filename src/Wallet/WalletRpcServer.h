@@ -47,7 +47,10 @@ namespace Tools
 
     //json_rpc
 	bool on_getaddress(const wallet_rpc::COMMAND_RPC_GET_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_GET_ADDRESS::response& res);
+
     bool on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response& res);
+	bool on_getbalance_xmr(const wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::response& res);
+
     bool on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::request& req, wallet_rpc::COMMAND_RPC_TRANSFER::response& res);
     bool on_store(const wallet_rpc::COMMAND_RPC_STORE::request& req, wallet_rpc::COMMAND_RPC_STORE::response& res);
     bool on_get_payments(const wallet_rpc::COMMAND_RPC_GET_PAYMENTS::request& req, wallet_rpc::COMMAND_RPC_GET_PAYMENTS::response& res);
@@ -62,6 +65,7 @@ namespace Tools
     CryptoNote::INode& m_node;
     uint16_t m_port;
     std::string m_bind_ip;
+	bool api_xmr;
     CryptoNote::Currency& m_currency;
     const std::string m_walletFilename;
 

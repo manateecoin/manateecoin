@@ -49,6 +49,22 @@ struct COMMAND_RPC_GET_ADDRESS
     };
   };
 
+  struct COMMAND_RPC_GET_BALANCE_XMR
+  {
+	  typedef CryptoNote::EMPTY_STRUCT request;
+
+	  struct response
+	  {
+		  uint64_t balance;
+		  uint64_t unlocked_balance;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(balance)
+		      KV_MEMBER(unlocked_balance)
+		  }
+	  };
+  };
+
   struct transfer_destination
   {
     uint64_t amount;

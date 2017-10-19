@@ -23,10 +23,12 @@ namespace Tools {
 
 const command_line::arg_descriptor<uint16_t> wallet_rpc_server::arg_rpc_bind_port = { "rpc-bind-port", "Starts wallet as rpc server for wallet operations, sets bind port for server", 0, true };
 const command_line::arg_descriptor<std::string> wallet_rpc_server::arg_rpc_bind_ip = { "rpc-bind-ip", "Specify ip to bind rpc server", "127.0.0.1" };
+const command_line::arg_descriptor<bool> arg_api_xmr = { "api-xmr", "Run RPC server in monero-compatible mode", false };
 
 void wallet_rpc_server::init_options(boost::program_options::options_description& desc) {
   command_line::add_arg(desc, arg_rpc_bind_ip);
   command_line::add_arg(desc, arg_rpc_bind_port);
+  command_line::add_arg(desc, arg_api_xmr);
 }
 //------------------------------------------------------------------------------------------------------------------------------
 wallet_rpc_server::wallet_rpc_server(
@@ -65,6 +67,8 @@ void wallet_rpc_server::send_stop_signal() {
 bool wallet_rpc_server::handle_command_line(const boost::program_options::variables_map& vm) {
   m_bind_ip = command_line::get_arg(vm, arg_rpc_bind_ip);
   m_port = command_line::get_arg(vm, arg_rpc_bind_port);
+  api_xmr = command_line::get_arg(vm, arg_api_xmr);
+
   return true;
 }
 //------------------------------------------------------------------------------------------------------------------------------
@@ -93,7 +97,6 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
 
     static std::unordered_map<std::string, JsonMemberMethod> s_methods = {
       { "getaddress", makeMemberMethod(&wallet_rpc_server::on_getaddress) },
-      { "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance) },
       { "transfer", makeMemberMethod(&wallet_rpc_server::on_transfer) },
       { "store", makeMemberMethod(&wallet_rpc_server::on_store) },
       { "get_payments", makeMemberMethod(&wallet_rpc_server::on_get_payments) },
@@ -101,6 +104,15 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
       { "get_height", makeMemberMethod(&wallet_rpc_server::on_get_height) },
       { "reset", makeMemberMethod(&wallet_rpc_server::on_reset) }
     };
+
+	if (api_xmr)
+	{
+		s_methods.insert({ "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance_xmr) });
+	}
+	else
+	{
+		s_methods.insert({ "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance) });
+	}
 
     auto it = s_methods.find(jsonRequest.getMethod());
     if (it == s_methods.end()) {
@@ -123,12 +135,24 @@ bool wallet_rpc_server::on_getaddress(const wallet_rpc::COMMAND_RPC_GET_ADDRESS:
 	res.address = m_wallet.getAddress();
 	return true;
 }
+
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response& res) {
   res.locked_amount = m_wallet.pendingBalance();
   res.available_balance = m_wallet.actualBalance();
   return true;
 }
+//------------------------------------------------------------------------------------------------------------------------------
+bool wallet_rpc_server::on_getbalance_xmr(const wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::response& res) {
+
+	uint64_t pending_balance = m_wallet.pendingBalance();
+	uint64_t unlocked_balance = m_wallet.actualBalance();
+
+	res.balance = pending_balance + unlocked_balance;
+	res.unlocked_balance = unlocked_balance;
+	return true;
+}
+
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::request& req, wallet_rpc::COMMAND_RPC_TRANSFER::response& res) {
   std::vector<CryptoNote::WalletLegacyTransfer> transfers;
