@@ -30,6 +30,7 @@ struct STATUS_STRUCT {
 
 struct f_block_short_response {
 	uint64_t timestamp;
+	uint64_t difficulty;
 	uint32_t height;
 	std::string hash;
 	uint64_t tx_count;
@@ -37,10 +38,11 @@ struct f_block_short_response {
 
 	void serialize(ISerializer &s) {
 		KV_MEMBER(timestamp)
-			KV_MEMBER(height)
-			KV_MEMBER(hash)
-			KV_MEMBER(cumul_size)
-			KV_MEMBER(tx_count)
+		KV_MEMBER(difficulty)
+		KV_MEMBER(height)
+		KV_MEMBER(hash)
+		KV_MEMBER(cumul_size)
+		KV_MEMBER(tx_count)
 	}
 };
 

@@ -672,11 +672,14 @@ bool RpcServer::f_on_blocks_list_json(const COMMAND_RPC_BLOCKS_LIST_JSON::reques
 
 		//BlockDetails blkDetails = m_core.getBlockDetails(block_hash);
 		size_t blkSize;
+		difficulty_type difficulty;
 		m_core.getBlockSize(block_hash, blkSize);
+		m_core.getBlockDifficulty(i, difficulty);
 
 		f_block_short_response block_short;
 		block_short.cumul_size = blkSize;
 		block_short.timestamp = blk.timestamp;
+		block_short.difficulty = difficulty;
 		block_short.height = i;
 		block_short.hash = Common::podToHex(block_hash);
 		block_short.tx_count = blk.transactionHashes.size() + 1;
