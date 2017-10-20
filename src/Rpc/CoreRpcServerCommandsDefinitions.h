@@ -28,6 +28,22 @@ struct STATUS_STRUCT {
   }
 };
 
+struct f_block_short_response {
+	uint64_t timestamp;
+	uint32_t height;
+	std::string hash;
+	uint64_t tx_count;
+	uint64_t cumul_size;
+
+	void serialize(ISerializer &s) {
+		KV_MEMBER(timestamp)
+			KV_MEMBER(height)
+			KV_MEMBER(hash)
+			KV_MEMBER(cumul_size)
+			KV_MEMBER(tx_count)
+	}
+};
+
 struct COMMAND_RPC_GET_HEIGHT {
   typedef EMPTY_STRUCT request;
 
@@ -425,6 +441,26 @@ struct COMMAND_RPC_GET_BLOCK_HEADER_BY_HEIGHT {
   };
 
   typedef BLOCK_HEADER_RESPONSE response;
+};
+
+struct COMMAND_RPC_BLOCKS_LIST_JSON {
+	struct request {
+		uint64_t height;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(height)
+		}
+	};
+
+	struct response {
+		std::vector<f_block_short_response> blocks; //transactions blobs as hex
+		std::string status;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(blocks)
+			KV_MEMBER(status)
+		}
+	};
 };
 
 struct COMMAND_RPC_QUERY_BLOCKS {

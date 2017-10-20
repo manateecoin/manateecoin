@@ -133,6 +133,7 @@ bool RpcServer::processJsonRpcRequest(const HttpRequest& request, HttpResponse& 
     jsonResponse.setId(jsonRequest.getId()); // copy id
 
     static std::unordered_map<std::string, RpcServer::RpcHandler<JsonMemberMethod>> jsonRpcHandlers = {
+      { "f_blocks_list_json",{ makeMemberMethod(&RpcServer::f_on_blocks_list_json), false } },
       { "getblockcount", { makeMemberMethod(&RpcServer::on_getblockcount), true } },
       { "on_getblockhash", { makeMemberMethod(&RpcServer::on_getblockhash), false } },
       { "getblocktemplate", { makeMemberMethod(&RpcServer::on_getblocktemplate), false } },
@@ -646,6 +647,48 @@ bool RpcServer::on_get_block_header_by_height(const COMMAND_RPC_GET_BLOCK_HEADER
   fill_block_header_response(blk, false, req.height, block_hash, res.block_header);
   res.status = CORE_RPC_STATUS_OK;
   return true;
+}
+
+bool RpcServer::f_on_blocks_list_json(const COMMAND_RPC_BLOCKS_LIST_JSON::request& req, COMMAND_RPC_BLOCKS_LIST_JSON::response& res) {
+	if (m_core.get_current_blockchain_height() <= req.height) {
+		throw JsonRpc::JsonRpcError{ CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT,
+			std::string("To big height: ") + std::to_string(req.height) + ", current blockchain height = " + std::to_string(m_core.get_current_blockchain_height()) };
+	}
+
+	uint32_t print_blocks_count = 30;
+	uint32_t last_height = req.height - print_blocks_count;
+	if (req.height <= print_blocks_count) {
+		last_height = 0;
+	}
+
+	for (uint32_t i = req.height; i >= last_height; i--) {
+		Hash block_hash = m_core.getBlockIdByHeight(static_cast<uint32_t>(i));
+		Block blk;
+		if (!m_core.getBlockByHash(block_hash, blk)) {
+			throw JsonRpc::JsonRpcError{
+				CORE_RPC_ERROR_CODE_INTERNAL_ERROR,
+				"Internal error: can't get block by height. Height = " + std::to_string(i) + '.' };
+		}
+
+		//BlockDetails blkDetails = m_core.getBlockDetails(block_hash);
+		size_t blkSize;
+		m_core.getBlockSize(block_hash, blkSize);
+
+		f_block_short_response block_short;
+		block_short.cumul_size = blkSize;
+		block_short.timestamp = blk.timestamp;
+		block_short.height = i;
+		block_short.hash = Common::podToHex(block_hash);
+		block_short.tx_count = blk.transactionHashes.size() + 1;
+
+		res.blocks.push_back(block_short);
+
+		if (i == 0)
+			break;
+	}
+
+	res.status = CORE_RPC_STATUS_OK;
+	return true;
 }
 
 bool RpcServer::enableCors(const std::vector<std::string> domains) {
