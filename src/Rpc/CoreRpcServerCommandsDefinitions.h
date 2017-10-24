@@ -28,6 +28,21 @@ struct STATUS_STRUCT {
   }
 };
 
+struct f_transaction_short_response {
+	std::string hash;
+	uint64_t fee;
+	uint64_t amount_out;
+	uint64_t size;
+
+	void serialize(ISerializer &s) {
+		KV_MEMBER(hash)
+		KV_MEMBER(fee)
+		KV_MEMBER(amount_out)
+		KV_MEMBER(size)
+	}
+};
+
+
 struct f_block_short_response {
 	uint64_t timestamp;
 	uint64_t difficulty;
@@ -44,6 +59,85 @@ struct f_block_short_response {
 		KV_MEMBER(cumul_size)
 		KV_MEMBER(tx_count)
 	}
+};
+
+struct f_block_details_response {
+  uint8_t major_version;
+  uint8_t minor_version;  
+  uint64_t timestamp;
+  std::string prev_hash;
+  uint32_t nonce;
+  bool orphan_status;
+  uint32_t height;
+  uint64_t depth;
+  std::string hash;
+  uint64_t difficulty;
+  uint64_t reward;
+  uint64_t blockSize;
+  size_t sizeMedian;
+  uint64_t effectiveSizeMedian;
+  uint64_t transactionsCumulativeSize;
+  std::string alreadyGeneratedCoins;
+  uint64_t alreadyGeneratedTransactions;
+  uint64_t baseReward;
+  double penalty;
+  uint64_t totalFeeAmount;
+  std::vector<f_transaction_short_response> transactions;
+
+  void serialize(ISerializer &s) {
+    KV_MEMBER(major_version)
+    KV_MEMBER(minor_version)
+    KV_MEMBER(timestamp)
+    KV_MEMBER(prev_hash)
+    KV_MEMBER(nonce)
+    KV_MEMBER(orphan_status)
+    KV_MEMBER(height)
+    KV_MEMBER(depth)
+    KV_MEMBER(hash)
+    KV_MEMBER(difficulty)
+    KV_MEMBER(reward)
+    KV_MEMBER(blockSize)
+    KV_MEMBER(sizeMedian)
+    KV_MEMBER(effectiveSizeMedian)
+    KV_MEMBER(transactionsCumulativeSize)
+    KV_MEMBER(alreadyGeneratedCoins)
+    KV_MEMBER(alreadyGeneratedTransactions)
+    KV_MEMBER(baseReward)
+    KV_MEMBER(penalty)
+    KV_MEMBER(transactions)
+    KV_MEMBER(totalFeeAmount)
+  }
+};
+
+
+struct currency_base_coin {
+  std::string name;
+  std::string git;
+
+  void serialize(ISerializer &s) {
+    KV_MEMBER(name)
+    KV_MEMBER(git)
+  }
+};
+
+struct F_COMMAND_RPC_GET_BLOCK_DETAILS {
+	struct request {
+		std::string hash;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(hash)
+		}
+	};
+
+	struct response {
+		f_block_details_response block;
+		std::string status;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(block)
+				KV_MEMBER(status)
+		}
+	};
 };
 
 struct COMMAND_RPC_GET_HEIGHT {
