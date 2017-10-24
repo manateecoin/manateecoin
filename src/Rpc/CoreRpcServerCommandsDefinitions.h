@@ -61,6 +61,24 @@ struct f_block_short_response {
 	}
 };
 
+struct f_transaction_details_response {
+	std::string hash;
+	size_t size;
+	std::string paymentId;
+	uint64_t mixin;
+	uint64_t fee;
+	uint64_t amount_out;
+
+	void serialize(ISerializer &s) {
+		KV_MEMBER(hash)
+		KV_MEMBER(size)
+		KV_MEMBER(paymentId)
+		KV_MEMBER(mixin)
+		KV_MEMBER(fee)
+		KV_MEMBER(amount_out)
+	}
+};
+
 struct f_block_details_response {
   uint8_t major_version;
   uint8_t minor_version;  
@@ -109,6 +127,29 @@ struct f_block_details_response {
   }
 };
 
+struct F_COMMAND_RPC_GET_TRANSACTION_DETAILS {
+	struct request {
+		std::string hash;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(hash)
+		}
+	};
+
+	struct response {
+		Transaction tx;
+		f_transaction_details_response txDetails;
+		f_block_short_response block;
+		std::string status;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(tx)
+				KV_MEMBER(txDetails)
+				KV_MEMBER(block)
+				KV_MEMBER(status)
+		}
+	};
+};
 
 struct currency_base_coin {
   std::string name;

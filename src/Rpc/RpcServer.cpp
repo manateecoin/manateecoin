@@ -135,6 +135,7 @@ bool RpcServer::processJsonRpcRequest(const HttpRequest& request, HttpResponse& 
     static std::unordered_map<std::string, RpcServer::RpcHandler<JsonMemberMethod>> jsonRpcHandlers = {
       { "f_blocks_list_json",{ makeMemberMethod(&RpcServer::f_on_blocks_list_json), false } },
 	  { "f_block_json",{ makeMemberMethod(&RpcServer::f_on_block_json), false } },
+	  { "f_transaction_json",{ makeMemberMethod(&RpcServer::f_on_transaction_json), false } },
       { "getblockcount", { makeMemberMethod(&RpcServer::on_getblockcount), true } },
       { "on_getblockhash", { makeMemberMethod(&RpcServer::on_getblockhash), false } },
       { "getblocktemplate", { makeMemberMethod(&RpcServer::on_getblocktemplate), false } },
@@ -786,6 +787,85 @@ bool RpcServer::f_on_block_json(const F_COMMAND_RPC_GET_BLOCK_DETAILS::request& 
 
 	res.status = CORE_RPC_STATUS_OK;
 	
+	return true;
+}
+
+bool RpcServer::f_on_transaction_json(const F_COMMAND_RPC_GET_TRANSACTION_DETAILS::request& req, F_COMMAND_RPC_GET_TRANSACTION_DETAILS::response& res) {
+	Hash hash;
+
+	if (!parse_hash256(req.hash, hash)) {
+		throw JsonRpc::JsonRpcError{
+			CORE_RPC_ERROR_CODE_WRONG_PARAM,
+			"Failed to parse hex representation of transaction hash. Hex = " + req.hash + '.' };
+	}
+
+	std::vector<Crypto::Hash> tx_ids;
+	tx_ids.push_back(hash);
+
+	std::list<Crypto::Hash> missed_txs;
+	std::list<Transaction> txs;
+	m_core.getTransactions(tx_ids, txs, missed_txs);
+
+	if (1 == txs.size()) {
+		res.tx = txs.front();
+	}
+	else {
+		throw JsonRpc::JsonRpcError{
+			CORE_RPC_ERROR_CODE_WRONG_PARAM,
+			"transaction wasn't found. Hash = " + req.hash + '.' };
+	}
+	TransactionDetails transactionDetails;
+	m_blkExplorer.fillTransactionDetails(res.tx, transactionDetails);
+
+	Crypto::Hash blockHash;
+	if (transactionDetails.inBlockchain) {
+		uint32_t blockHeight = transactionDetails.blockHeight;
+		if (!blockHeight) {
+			throw JsonRpc::JsonRpcError{
+				CORE_RPC_ERROR_CODE_INTERNAL_ERROR,
+				"Internal error: can't get transaction by hash. Hash = " + Common::podToHex(hash) + '.' };
+		}
+		blockHash = m_core.getBlockIdByHeight(blockHeight);
+		Block blk;
+		m_core.getBlockByHash(blockHash, blk);
+		BlockDetails blkDetails;
+		m_blkExplorer.fillBlockDetails(blk, blkDetails);
+
+		f_block_short_response block_short;
+
+		block_short.cumul_size = blkDetails.blockSize;
+		block_short.timestamp = blk.timestamp;
+		block_short.height = blockHeight;
+		block_short.hash = Common::podToHex(blockHash);
+		block_short.tx_count = blk.transactionHashes.size() + 1;
+		res.block = block_short;
+	}
+
+	uint64_t amount_in = getInputAmount(res.tx);
+	uint64_t amount_out = getOutputAmount(res.tx);
+
+	res.txDetails.hash = Common::podToHex(getObjectHash(res.tx));
+	res.txDetails.fee = amount_in - amount_out;
+	if (amount_in == 0)
+		res.txDetails.fee = 0;
+	res.txDetails.amount_out = amount_out;
+	res.txDetails.size = getObjectBinarySize(res.tx);
+
+	uint64_t mixin;
+	if (!m_blkExplorer.getMixin(res.tx, mixin)) {
+		return false;
+	}
+	res.txDetails.mixin = mixin;
+
+	Crypto::Hash paymentId;
+	if (CryptoNote::getPaymentIdFromTxExtra(res.tx.extra, paymentId)) {
+		res.txDetails.paymentId = Common::podToHex(paymentId);
+	}
+	else {
+		res.txDetails.paymentId = "";
+	}
+
+	res.status = CORE_RPC_STATUS_OK;
 	return true;
 }
 
