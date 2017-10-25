@@ -105,6 +105,63 @@ struct COMMAND_RPC_GET_ADDRESS
     };
   };
 
+
+  struct COMMAND_RPC_TRANSFER_SPLIT
+  {
+	  struct request
+	  {
+		  std::list<transfer_destination> destinations;
+		  uint32_t account_index;
+		  std::set<uint32_t> subaddr_indices;
+		  uint32_t priority;
+		  uint64_t mixin;
+		  uint64_t unlock_time;
+		  std::string payment_id;
+		  bool get_tx_keys;
+		  bool do_not_relay;
+		  bool get_tx_hex;
+
+		  void serialize(ISerializer& s) {
+			KV_MEMBER(destinations)
+			KV_MEMBER(account_index)
+			KV_MEMBER(subaddr_indices)
+			KV_MEMBER(priority)
+			KV_MEMBER(mixin)
+			KV_MEMBER(unlock_time)
+			KV_MEMBER(payment_id)
+			KV_MEMBER(get_tx_keys)
+			KV_MEMBER(do_not_relay, false)
+			KV_MEMBER(get_tx_hex, false)
+		  }
+	  };
+
+	  struct key_list
+	  {
+		  std::list<std::string> keys;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(keys)
+		  }
+	  };
+
+	  struct response
+	  {
+		  std::list<std::string> tx_hash_list;
+		  std::list<std::string> tx_key_list;
+		  std::list<uint64_t> amount_list;
+		  std::list<uint64_t> fee_list;
+		  std::list<std::string> tx_blob_list;
+
+		  void serialize(ISerializer& s) {
+			KV_MEMBER(tx_hash_list)
+			KV_MEMBER(tx_key_list)
+			KV_MEMBER(amount_list)
+			KV_MEMBER(fee_list)
+			KV_MEMBER(tx_blob_list)
+		  }
+	  };
+  };
+
   struct COMMAND_RPC_STORE
   {
     typedef CryptoNote::EMPTY_STRUCT request;

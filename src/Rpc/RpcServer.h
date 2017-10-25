@@ -10,7 +10,7 @@
 #include <Logging/LoggerRef.h>
 #include "CoreRpcServerCommandsDefinitions.h"
 
-#include "BlockchainExplorer\BlockchainExplorerDataBuilder.h"
+#include "BlockchainExplorer/BlockchainExplorerDataBuilder.h"
 
 namespace CryptoNote {
 

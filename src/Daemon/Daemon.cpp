@@ -18,7 +18,7 @@
 #include "CryptoNoteCore/Currency.h"
 #include "CryptoNoteCore/MinerConfig.h"
 #include "CryptoNoteProtocol/CryptoNoteProtocolHandler.h"
-#include "BlockchainExplorer\BlockchainExplorerDataBuilder.h"
+#include "BlockchainExplorer/BlockchainExplorerDataBuilder.h"
 #include "P2p/NetNode.h"
 #include "P2p/NetNodeConfig.h"
 #include "Rpc/RpcServer.h"
