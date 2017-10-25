@@ -109,6 +109,7 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
 	{
 		s_methods.insert({ "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance_xmr) });
 		s_methods.insert({ "transfer_split", makeMemberMethod(&wallet_rpc_server::on_transfer_split) });
+		s_methods.insert({ "get_bulk_payments", makeMemberMethod(&wallet_rpc_server::on_get_bulk_payments) });
 	}
 	else
 	{
@@ -290,8 +291,92 @@ bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER
 		er.message = "WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR";
 		return false;
 	}
-	return true;
 	*/
+	return true;
+	
+}
+//------------------------------------------------------------------------------------------------------------------------------
+bool wallet_rpc_server::on_get_bulk_payments(const wallet_rpc::COMMAND_RPC_GET_BULK_PAYMENTS::request& req, wallet_rpc::COMMAND_RPC_GET_BULK_PAYMENTS::response& res)
+{
+	res.payments.clear();
+	
+	/* If the payment ID list is empty, we get payments to any payment ID (or lack thereof) */
+	if (req.payment_ids.empty())
+	{
+		size_t transactionsCount = m_wallet.getTransactionCount();
+		for (size_t trantransactionNumber = 0; trantransactionNumber < transactionsCount; ++trantransactionNumber) {
+			WalletLegacyTransaction txInfo;
+			m_wallet.getTransaction(trantransactionNumber, txInfo);
+			if (txInfo.state != WalletLegacyTransactionState::Active || txInfo.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+				continue;
+			}
+
+			if (txInfo.totalAmount < 0) continue;
+			std::vector<uint8_t> extraVec;
+			extraVec.reserve(txInfo.extra.size());
+			std::for_each(txInfo.extra.begin(), txInfo.extra.end(), [&extraVec](const char el) { extraVec.push_back(el); });
+
+			Crypto::Hash paymentId;
+			if (getPaymentIdFromTxExtra(extraVec, paymentId) && req.min_block_height <= txInfo.blockHeight) {
+				wallet_rpc::payment_details2 rpc_payment;
+				rpc_payment.payment_id = Common::podToHex(paymentId);
+				rpc_payment.tx_hash = Common::podToHex(txInfo.hash);
+				rpc_payment.amount = txInfo.totalAmount;
+				rpc_payment.block_height = txInfo.blockHeight;
+				rpc_payment.unlock_time = txInfo.unlockTime;
+				res.payments.push_back(rpc_payment);
+			}
+		}
+
+		return true;
+	}
+
+	for (auto & payment_id_str : req.payment_ids)
+	{
+		Crypto::Hash expectedPaymentId;
+		CryptoNote::BinaryArray payment_id_blob;
+
+		// TODO - should the whole thing fail because of one bad id?
+
+		if (!Common::fromHex(payment_id_str, payment_id_blob))
+		{
+			throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_WRONG_PAYMENT_ID, "Payment ID has invalid format: " + payment_id_str);
+		}
+
+		if (sizeof(expectedPaymentId) != payment_id_blob.size())
+		{
+			throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_WRONG_PAYMENT_ID, "Payment ID has invalid size: " + payment_id_str);
+		}
+
+
+		expectedPaymentId = *reinterpret_cast<const Crypto::Hash*>(payment_id_blob.data());
+		size_t transactionsCount = m_wallet.getTransactionCount();
+		for (size_t trantransactionNumber = 0; trantransactionNumber < transactionsCount; ++trantransactionNumber) {
+			WalletLegacyTransaction txInfo;
+			m_wallet.getTransaction(trantransactionNumber, txInfo);
+			if (txInfo.state != WalletLegacyTransactionState::Active || txInfo.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+				continue;
+			}
+
+			if (txInfo.totalAmount < 0) continue;
+			std::vector<uint8_t> extraVec;
+			extraVec.reserve(txInfo.extra.size());
+			std::for_each(txInfo.extra.begin(), txInfo.extra.end(), [&extraVec](const char el) { extraVec.push_back(el); });
+
+			Crypto::Hash paymentId;
+			if (getPaymentIdFromTxExtra(extraVec, paymentId) && paymentId == expectedPaymentId && req.min_block_height <= txInfo.blockHeight) {
+				wallet_rpc::payment_details2 rpc_payment;
+				rpc_payment.payment_id = payment_id_str;
+				rpc_payment.tx_hash = Common::podToHex(txInfo.hash);
+				rpc_payment.amount = txInfo.totalAmount;
+				rpc_payment.block_height = txInfo.blockHeight;
+				rpc_payment.unlock_time = txInfo.unlockTime;
+				res.payments.push_back(rpc_payment);
+			}
+		}
+	}
+
+	return true;
 }
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::on_store(const wallet_rpc::COMMAND_RPC_STORE::request& req, wallet_rpc::COMMAND_RPC_STORE::response& res) {

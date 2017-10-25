@@ -183,6 +183,24 @@ struct COMMAND_RPC_GET_ADDRESS
     }
   };
 
+  struct payment_details2
+  {
+	  std::string payment_id;
+	  std::string tx_hash;
+	  uint64_t amount;
+	  uint64_t block_height;
+	  uint64_t unlock_time;
+
+	  void serialize(ISerializer& s) {
+		  KV_MEMBER(payment_id)
+	      KV_MEMBER(tx_hash)
+		  KV_MEMBER(amount)
+		  KV_MEMBER(block_height)
+		  KV_MEMBER(unlock_time)
+	  }
+  };
+
+
   struct COMMAND_RPC_GET_PAYMENTS
   {
     struct request
@@ -203,6 +221,30 @@ struct COMMAND_RPC_GET_ADDRESS
       }
     };
   };
+
+  struct COMMAND_RPC_GET_BULK_PAYMENTS
+  {
+	  struct request
+	  {
+		  std::vector<std::string> payment_ids;
+		  uint64_t min_block_height;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(payment_ids)
+				  KV_MEMBER(min_block_height)
+		  }
+	  };
+
+	  struct response
+	  {
+		  std::list<payment_details2> payments;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(payments)
+		  }
+	  };
+  };
+
 
   struct Transfer {
     uint64_t time;
