@@ -98,7 +98,6 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
 
     static std::unordered_map<std::string, JsonMemberMethod> s_methods = {
       { "getaddress", makeMemberMethod(&wallet_rpc_server::on_getaddress) },
-      { "transfer", makeMemberMethod(&wallet_rpc_server::on_transfer) },
       { "store", makeMemberMethod(&wallet_rpc_server::on_store) },
       { "get_payments", makeMemberMethod(&wallet_rpc_server::on_get_payments) },
       { "get_transfers", makeMemberMethod(&wallet_rpc_server::on_get_transfers) },
@@ -109,12 +108,14 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
 	if (api_xmr)
 	{
 		s_methods.insert({ "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance_xmr) });
+		s_methods.insert({ "transfer", makeMemberMethod(&wallet_rpc_server::on_transfer_xmr) });
 		s_methods.insert({ "transfer_split", makeMemberMethod(&wallet_rpc_server::on_transfer_split) });
 		s_methods.insert({ "get_bulk_payments", makeMemberMethod(&wallet_rpc_server::on_get_bulk_payments) });
 	}
 	else
 	{
 		s_methods.insert({ "getbalance", makeMemberMethod(&wallet_rpc_server::on_getbalance) });
+		s_methods.insert({ "transfer", makeMemberMethod(&wallet_rpc_server::on_transfer) });
 	}
 
     auto it = s_methods.find(jsonRequest.getMethod());
@@ -211,6 +212,88 @@ bool wallet_rpc_server::on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::requ
   }
   return true;
 }
+
+//------------------------------------------------------------------------------------------------------------------------------
+bool wallet_rpc_server::on_transfer_xmr(const wallet_rpc::COMMAND_RPC_TRANSFER_XMR::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_XMR::response& res) {
+	
+	std::vector<CryptoNote::WalletLegacyTransfer> transfers;
+	for (auto it = req.destinations.begin(); it != req.destinations.end(); it++) {
+		CryptoNote::WalletLegacyTransfer transfer;
+		transfer.address = it->address;
+		transfer.amount = it->amount;
+		transfers.push_back(transfer);
+	}
+
+	std::vector<uint8_t> extra;
+	if (!req.payment_id.empty()) {
+		std::string payment_id_str = req.payment_id;
+
+		Crypto::Hash payment_id;
+		if (!CryptoNote::parsePaymentId(payment_id_str, payment_id)) {
+			throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_WRONG_PAYMENT_ID,
+				"Payment id has invalid format: \"" + payment_id_str + "\", expected 64-character string");
+		}
+
+		BinaryArray extra_nonce;
+		CryptoNote::setPaymentIdToTransactionExtraNonce(extra_nonce, payment_id);
+		if (!CryptoNote::addExtraNonceToTransactionExtra(extra, extra_nonce)) {
+			throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_WRONG_PAYMENT_ID,
+				"Something went wrong with payment_id. Please check its format: \"" + payment_id_str + "\", expected 64-character string");
+		}
+	}
+
+	std::string extraString;
+	std::copy(extra.begin(), extra.end(), std::back_inserter(extraString));
+	try {
+		CryptoNote::WalletHelper::SendCompleteResultObserver sent;
+		WalletHelper::IWalletRemoveObserverGuard removeGuard(m_wallet, sent);
+
+		CryptoNote::TransactionId tx = m_wallet.sendTransaction(transfers, req.fee, extraString, req.mixin, req.unlock_time);
+		if (tx == WALLET_LEGACY_INVALID_TRANSACTION_ID) {
+			throw std::runtime_error("Couldn't send transaction");
+		}
+
+		std::error_code sendError = sent.wait(tx);
+		removeGuard.removeObserver();
+
+		if (sendError) {
+			throw std::system_error(sendError);
+		}
+
+		CryptoNote::WalletLegacyTransaction txInfo;
+		m_wallet.getTransaction(tx, txInfo);
+		
+		res.fee = txInfo.fee;
+		res.tx_hash = Common::podToHex(txInfo.hash);
+		if (req.get_tx_key)
+		{
+			res.tx_key = "unimplemented";
+		}
+		else
+		{
+			res.tx_key = "";
+		}
+
+		if (req.get_tx_hex)
+		{
+			//CryptoNote::BinaryArray blob;
+			//CryptoNote::toBinaryArray(tx, blob);
+			//res.tx_blob = Common::podToHex(blob);
+			res.tx_blob = "unimplemented";
+		}
+		else
+		{
+			res.tx_blob = "";
+		}
+
+	}
+	catch (const std::exception& e) {
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR, e.what());
+	}
+	
+	return true;
+}
+
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res)
 {

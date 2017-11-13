@@ -52,6 +52,7 @@ namespace Tools
 	bool on_getbalance_xmr(const wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE_XMR::response& res);
 
     bool on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::request& req, wallet_rpc::COMMAND_RPC_TRANSFER::response& res);
+	bool on_transfer_xmr(const wallet_rpc::COMMAND_RPC_TRANSFER_XMR::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_XMR::response& res);
     bool on_store(const wallet_rpc::COMMAND_RPC_STORE::request& req, wallet_rpc::COMMAND_RPC_STORE::response& res);
     bool on_get_payments(const wallet_rpc::COMMAND_RPC_GET_PAYMENTS::request& req, wallet_rpc::COMMAND_RPC_GET_PAYMENTS::response& res);
     bool on_get_transfers(const wallet_rpc::COMMAND_RPC_GET_TRANSFERS::request& req, wallet_rpc::COMMAND_RPC_GET_TRANSFERS::response& res);

@@ -105,6 +105,48 @@ struct COMMAND_RPC_GET_ADDRESS
     };
   };
 
+  struct COMMAND_RPC_TRANSFER_XMR
+  {
+	  struct request
+	  {
+		  std::list<transfer_destination> destinations;
+		  uint64_t fee;
+		  uint64_t mixin;
+		  uint64_t unlock_time;
+		  std::string payment_id;
+		  bool get_tx_key;
+		  uint64_t priority;
+		  bool do_not_relay;
+		  bool get_tx_hex;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(destinations)
+			  KV_MEMBER(fee)
+			  KV_MEMBER(mixin)
+			  KV_MEMBER(unlock_time)
+			  KV_MEMBER(payment_id)
+			  KV_MEMBER(get_tx_key)
+			  KV_MEMBER(priority)
+			  KV_MEMBER(do_not_relay)
+			  KV_MEMBER(get_tx_hex)
+		  }
+	  };
+
+	  struct response
+	  {
+		  uint64_t fee;
+		  std::string tx_hash;
+		  std::string tx_key;
+		  std::string tx_blob;
+
+		  void serialize(ISerializer& s) {
+			  KV_MEMBER(fee)
+			  KV_MEMBER(tx_hash)
+			  KV_MEMBER(tx_key)
+			  KV_MEMBER(tx_blob)
+		  }
+	  };
+  };
 
   struct COMMAND_RPC_TRANSFER_SPLIT
   {
