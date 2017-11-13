@@ -12,6 +12,7 @@
 #include "CryptoNoteCore/Account.h"
 #include "crypto/hash.h"
 #include "WalletLegacy/WalletHelper.h"
+#include "CryptoNoteCore/CryptoNoteTools.h"
 // #include "wallet_errors.h"
 
 #include "Rpc/JsonRpc.h"
@@ -214,46 +215,35 @@ bool wallet_rpc_server::on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::requ
 bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, wallet_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res)
 {
 	/*
-	std::vector<cryptonote::tx_destination_entry> dsts;
+	std::vector<CryptoNote::WalletLegacyTransfer> dsts;
 	std::vector<uint8_t> extra;
 
-	if (!m_wallet) return not_open(er);
-	if (m_wallet->restricted())
-	{
-		er.code = WALLET_RPC_ERROR_CODE_DENIED;
-		er.message = "Command unavailable in restricted mode.";
-		return false;
-	}
-
 	// validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
-	if (!validate_transfer(req.destinations, req.payment_id, dsts, extra, er))
+	if (!validate_transfer(req.destinations, req.payment_id, dsts, extra))
 	{
 		return false;
 	}
 
 	try
 	{
-		uint64_t mixin = adjust_mixin(req.mixin);
 		uint64_t ptx_amount;
-		std::vector<wallet2::pending_tx> ptx_vector;
-		LOG_PRINT_L2("on_transfer_split calling create_transactions_2");
-		ptx_vector = m_wallet->create_transactions_2(dsts, mixin, req.unlock_time, req.priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
-		LOG_PRINT_L2("on_transfer_split called create_transactions_2");
+		std::vector<pending_tx> ptx_vector;
+		ptx_vector = m_wallet->create_transactions_2(dsts, req.mixin, req.unlock_time, req.priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
 
 		if (!req.do_not_relay)
 		{
-			LOG_PRINT_L2("on_transfer_split calling commit_tx");
 			m_wallet->commit_tx(ptx_vector);
-			LOG_PRINT_L2("on_transfer_split called commit_tx");
 		}
 
 		// populate response with tx hashes
 		for (auto & ptx : ptx_vector)
 		{
-			res.tx_hash_list.push_back(epee::string_tools::pod_to_hex(cryptonote::get_transaction_hash(ptx.tx)));
+			CryptoNote::WalletLegacyTransaction txInfo;
+			m_wallet.getTransaction(ptx.tx, txInfo);
+			res.tx_hash_list.push_back(Common::podToHex(txInfo.hash));
 			if (req.get_tx_keys)
 			{
-				res.tx_key_list.push_back(epee::string_tools::pod_to_hex(ptx.tx_key));
+				res.tx_key_list.push_back(Common::podToHex(ptx.tx_key));
 			}
 			// Compute amount leaving wallet in tx. By convention dests does not include change outputs
 			ptx_amount = 0;
@@ -265,31 +255,22 @@ bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER
 
 			if (req.get_tx_hex)
 			{
-				cryptonote::blobdata blob;
-				tx_to_blob(ptx.tx, blob);
-				res.tx_blob_list.push_back(epee::string_tools::buff_to_hex_nodelimer(blob));
+				CryptoNote::BinaryArray blob;
+				CryptoNote::toBinaryArray(ptx.tx, blob);
+				//tx_to_blob(ptx.tx, blob);
+				res.tx_blob_list.push_back(Common::podToHex(blob));
 			}
 		}
 
 		return true;
 	}
-	catch (const tools::error::daemon_busy& e)
-	{
-		er.code = WALLET_RPC_ERROR_CODE_DAEMON_IS_BUSY;
-		er.message = e.what();
-		return false;
-	}
 	catch (const std::exception& e)
 	{
-		er.code = WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR;
-		er.message = e.what();
-		return false;
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR, e.what());
 	}
 	catch (...)
 	{
-		er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-		er.message = "WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR";
-		return false;
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, "WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR");
 	}
 	*/
 	return true;

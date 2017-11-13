@@ -10,6 +10,7 @@
 #include <string>
 #include <system_error>
 #include "CryptoNote.h"
+#include "CryptoNoteCore/CryptoNoteFormatUtils.h"
 
 namespace CryptoNote {
 
@@ -47,6 +48,35 @@ struct WalletLegacyTransaction {
   uint64_t         timestamp;
   std::string      extra;
   WalletLegacyTransactionState state;
+};
+
+struct tx_construction_data
+{
+	std::vector<CryptoNote::TransactionSourceEntry> sources;
+	CryptoNote::TransactionDestinationEntry change_dts;
+	std::vector<CryptoNote::TransactionDestinationEntry> splitted_dsts;
+	std::list<size_t> selected_transfers;
+	std::vector<uint8_t> extra;
+	uint64_t unlock_time;
+	bool use_rct;
+	std::vector<CryptoNote::TransactionDestinationEntry> dests;
+	uint32_t subaddr_account;
+	std::set<uint32_t> subaddr_indices;
+};
+
+struct pending_tx
+{
+	CryptoNote::Transaction tx;
+	uint64_t dust, fee;
+	bool dust_added_to_fee;
+	CryptoNote::TransactionDestinationEntry change_dts;
+	std::list<size_t> selected_transfers;
+	std::string key_images;
+	Crypto::SecretKey tx_key;
+	std::vector<Crypto::SecretKey> additional_tx_keys;
+	std::vector<CryptoNote::TransactionDestinationEntry> dests;
+
+	tx_construction_data construction_data;
 };
 
 class IWalletLegacyObserver {
