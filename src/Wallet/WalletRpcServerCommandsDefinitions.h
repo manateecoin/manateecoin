@@ -110,14 +110,14 @@ struct COMMAND_RPC_GET_ADDRESS
 	  struct request
 	  {
 		  std::list<transfer_destination> destinations;
-		  uint64_t fee;
-		  uint64_t mixin;
+		  uint64_t fee = 1000000;
+		  uint64_t mixin = 0;
 		  uint64_t unlock_time;
 		  std::string payment_id;
-		  bool get_tx_key;
-		  uint64_t priority;
-		  bool do_not_relay;
-		  bool get_tx_hex;
+		  bool get_tx_key = false;
+		  uint64_t priority = 0;
+		  bool do_not_relay = false;
+		  bool get_tx_hex = false;
 
 		  void serialize(ISerializer& s) {
 			  KV_MEMBER(destinations)
