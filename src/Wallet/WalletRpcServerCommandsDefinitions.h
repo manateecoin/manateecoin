@@ -172,8 +172,8 @@ struct COMMAND_RPC_GET_ADDRESS
 			KV_MEMBER(unlock_time)
 			KV_MEMBER(payment_id)
 			KV_MEMBER(get_tx_keys)
-			KV_MEMBER(do_not_relay, false)
-			KV_MEMBER(get_tx_hex, false)
+			KV_MEMBER(do_not_relay)
+			KV_MEMBER(get_tx_hex)
 		  }
 	  };
 
