@@ -11,6 +11,7 @@
 #include "Common/StringTools.h"
 #include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/Core.h"
+#include "CryptoNoteCore/Currency.h"
 #include "CryptoNoteCore/IBlock.h"
 #include "CryptoNoteCore/Miner.h"
 #include "CryptoNoteCore/TransactionExtra.h"
@@ -751,7 +752,15 @@ bool RpcServer::f_on_block_json(const F_COMMAND_RPC_GET_BLOCK_DETAILS::request& 
 	uint64_t maxReward = 0;
 	uint64_t currentReward = 0;
 	int64_t emissionChange = 0;
-	size_t blockGrantedFullRewardZone = 10000; //CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE
+	size_t blockGrantedFullRewardZone;
+	if (res.block.height >= CryptoNote::parameters::CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2_UPGRATE_HEIGHT)
+	{
+		blockGrantedFullRewardZone = CryptoNote::parameters::CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+	}
+	else
+	{
+		blockGrantedFullRewardZone = CryptoNote::parameters::CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1;
+	}
 	res.block.effectiveSizeMedian = std::max(res.block.sizeMedian, blockGrantedFullRewardZone);
 
 	res.block.baseReward = blkDetails.baseReward;

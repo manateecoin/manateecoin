@@ -849,7 +849,7 @@ bool Blockchain::validate_miner_transaction(const Block& b, uint32_t height, siz
   get_last_n_blocks_sizes(lastBlocksSizes, m_currency.rewardBlocksWindow());
   size_t blocksSizeMedian = Common::medianValue(lastBlocksSizes);
 
-  if (!m_currency.getBlockReward(blocksSizeMedian, cumulativeBlockSize, alreadyGeneratedCoins, fee, reward, emissionChange)) {
+  if (!m_currency.getBlockReward(height, blocksSizeMedian, cumulativeBlockSize, alreadyGeneratedCoins, fee, reward, emissionChange)) {
     logger(INFO, BRIGHT_WHITE) << "block size " << cumulativeBlockSize << " is bigger than allowed for this blockchain";
     return false;
   }
@@ -1575,10 +1575,12 @@ bool Blockchain::getBlockCumulativeSize(const Block& block, size_t& cumulativeSi
 bool Blockchain::update_next_comulative_size_limit() {
   std::vector<size_t> sz;
   get_last_n_blocks_sizes(sz, m_currency.rewardBlocksWindow());
+  uint32_t nextBlockHeight = static_cast<uint32_t>(m_blocks.size());
+  size_t nextBlockGrantedFullRewardZone = m_currency.blockGrantedFullRewardZoneByBlockHeight(nextBlockHeight);
 
   uint64_t median = Common::medianValue(sz);
-  if (median <= m_currency.blockGrantedFullRewardZone()) {
-    median = m_currency.blockGrantedFullRewardZone();
+  if (median <= nextBlockGrantedFullRewardZone) {
+    median = nextBlockGrantedFullRewardZone;
   }
 
   m_current_block_cumul_sz_limit = median * 2;
