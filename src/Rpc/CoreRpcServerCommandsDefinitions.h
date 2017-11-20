@@ -151,7 +151,7 @@ struct F_COMMAND_RPC_GET_TRANSACTION_DETAILS {
 	};
 };
 
-struct F_COMMAND_RPC_GET_POOL {
+struct F_COMMAND_RPC_GET_TRANSACTIONS_POOL {
 	typedef EMPTY_STRUCT request;
 
 	struct response {
@@ -161,6 +161,20 @@ struct F_COMMAND_RPC_GET_POOL {
 		void serialize(ISerializer &s) {
 			KV_MEMBER(transactions)
 			KV_MEMBER(status)
+		}
+	};
+};
+
+struct F_COMMAND_RPC_GET_POOL {
+	typedef std::vector<std::string> request;
+
+	struct response {
+		std::string transactions;
+		std::string status;
+
+		void serialize(ISerializer &s) {
+			KV_MEMBER(transactions)
+				KV_MEMBER(status)
 		}
 	};
 };
