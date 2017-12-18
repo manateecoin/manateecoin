@@ -314,6 +314,51 @@ std::string get_nix_version_display_string()
     return config_folder;
   }
 
+#ifdef WIN32
+  std::wstring get_special_folder_path_w(int nfolder, bool iscreate)
+  {
+	  namespace fs = boost::filesystem;
+	  wchar_t wsz_path[MAX_PATH] = L"";
+
+	  if (SHGetSpecialFolderPathW(NULL, wsz_path, nfolder, iscreate)) {
+		  return wsz_path;
+	  }
+
+	  return L"";
+  }
+#endif
+
+  std::wstring getDefaultDataDirectoryW()
+  {
+	  //namespace fs = boost::filesystem;
+	  // Windows < Vista: C:\Documents and Settings\Username\Application Data\CRYPTONOTE_NAME
+	  // Windows >= Vista: C:\Users\Username\AppData\Roaming\CRYPTONOTE_NAME
+	  // Mac: ~/Library/Application Support/CRYPTONOTE_NAME
+	  // Unix: ~/.CRYPTONOTE_NAME
+	  std::wstring config_folder;
+#ifdef WIN32
+	  // Windows
+	  config_folder = get_special_folder_path_w(CSIDL_APPDATA, true) + L"\\manateecoin";
+#else
+	  std::string pathRet;
+	  char* pszHome = getenv("HOME");
+	  if (pszHome == NULL || strlen(pszHome) == 0)
+		  pathRet = "/";
+	  else
+		  pathRet = pszHome;
+#ifdef MAC_OSX
+	  // Mac
+	  pathRet /= "Library/Application Support";
+	  config_folder = (pathRet + "/" + CryptoNote::CRYPTONOTE_NAME);
+#else
+	  // Unix
+	  config_folder = (pathRet + "/." + CryptoNote::CRYPTONOTE_NAME);
+#endif
+#endif
+
+	  return config_folder;
+  }
+
   bool create_directories_if_necessary(const std::string& path)
   {
     namespace fs = boost::filesystem;
