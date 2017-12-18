@@ -339,21 +339,6 @@ std::string get_nix_version_display_string()
 #ifdef WIN32
 	  // Windows
 	  config_folder = get_special_folder_path_w(CSIDL_APPDATA, true) + L"\\manateecoin";
-#else
-	  std::string pathRet;
-	  char* pszHome = getenv("HOME");
-	  if (pszHome == NULL || strlen(pszHome) == 0)
-		  pathRet = "/";
-	  else
-		  pathRet = pszHome;
-#ifdef MAC_OSX
-	  // Mac
-	  pathRet /= "Library/Application Support";
-	  config_folder = (pathRet + "/" + CryptoNote::CRYPTONOTE_NAME);
-#else
-	  // Unix
-	  config_folder = (pathRet + "/." + CryptoNote::CRYPTONOTE_NAME);
-#endif
 #endif
 
 	  return config_folder;
